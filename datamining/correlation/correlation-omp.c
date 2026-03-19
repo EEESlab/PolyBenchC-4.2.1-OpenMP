@@ -100,7 +100,9 @@ void kernel_correlation(int m, int n,
 	/* The following in an inelegant but usual way to handle
 	   near-zero std. dev. values, which below would cause a zero-
 	   divide. */
-	stddev[j] = stddev[j] <= eps ? SCALAR_VAL(1.0) : stddev[j];
+	/* stddev[j] = stddev[j] <= eps ? SCALAR_VAL(1.0) : stddev[j]; */
+	if (stddev[j] <= eps)
+	  stddev[j] = SCALAR_VAL(1.0);
       }
 
     /* Center and reduce the column vectors. */

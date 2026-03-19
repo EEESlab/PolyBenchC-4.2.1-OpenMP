@@ -75,8 +75,10 @@ void kernel_floyd_warshall(int n,
       #pragma omp parallel for private (j)
       for(i = 0; i < _PB_N; i++)
 	for (j = 0; j < _PB_N; j++)
-	  path[i][j] = path[i][j] < path[i][k] + path[k][j] ?
-	    path[i][j] : path[i][k] + path[k][j];
+	  /* path[i][j] = path[i][j] < path[i][k] + path[k][j] ?
+	       path[i][j] : path[i][k] + path[k][j]; */
+	  if (path[i][k] + path[k][j] < path[i][j])
+	    path[i][j] = path[i][k] + path[k][j];
     }
 #pragma endscop
 
