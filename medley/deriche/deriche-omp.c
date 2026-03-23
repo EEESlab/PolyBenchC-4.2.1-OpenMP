@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* deriche.c: this file is part of PolyBench/C */
+/* deriche-omp.c: OpenMP parallel version of deriche.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -86,7 +90,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
    c1 = c2 = 1;
 
    /* Horizontal pass: each row i is independent */
-   #pragma omp parallel for private (j)
+   #pragma omp parallel for private(j) schedule(static)
    for (i=0; i<_PB_W; i++) {
         DATA_TYPE ym1 = SCALAR_VAL(0.0);
         DATA_TYPE ym2 = SCALAR_VAL(0.0);
@@ -99,7 +103,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp parallel for private(j) schedule(static)
     for (i=0; i<_PB_W; i++) {
         DATA_TYPE yp1 = SCALAR_VAL(0.0);
         DATA_TYPE yp2 = SCALAR_VAL(0.0);
@@ -114,14 +118,14 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp parallel for private(j) schedule(static)
     for (i=0; i<_PB_W; i++)
         for (j=0; j<_PB_H; j++) {
             imgOut[i][j] = c1 * (y1[i][j] + y2[i][j]);
         }
 
     /* Vertical pass: each column j is independent */
-    #pragma omp parallel for private (i)
+    #pragma omp parallel for private(i) schedule(static)
     for (j=0; j<_PB_H; j++) {
         DATA_TYPE tm1 = SCALAR_VAL(0.0);
         DATA_TYPE ym1 = SCALAR_VAL(0.0);
@@ -134,7 +138,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (i)
+    #pragma omp parallel for private(i) schedule(static)
     for (j=0; j<_PB_H; j++) {
         DATA_TYPE tp1 = SCALAR_VAL(0.0);
         DATA_TYPE tp2 = SCALAR_VAL(0.0);
@@ -149,7 +153,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp parallel for private(j) schedule(static)
     for (i=0; i<_PB_W; i++)
         for (j=0; j<_PB_H; j++)
             imgOut[i][j] = c2*(y1[i][j] + y2[i][j]);

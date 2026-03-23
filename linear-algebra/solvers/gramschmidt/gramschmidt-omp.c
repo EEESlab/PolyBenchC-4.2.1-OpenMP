@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* gramschmidt.c: this file is part of PolyBench/C */
+/* gramschmidt-omp.c: OpenMP parallel version of gramschmidt.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -93,11 +97,11 @@ void kernel_gramschmidt(int m, int n,
         nrm += A[i][k] * A[i][k];
       R[k][k] = SQRT_FUN(nrm);
 
-      #pragma omp parallel for
+      #pragma omp parallel for schedule(static)
       for (i = 0; i < _PB_M; i++)
         Q[i][k] = A[i][k] / R[k][k];
 
-      #pragma omp parallel for private (i)
+      #pragma omp parallel for private(i) schedule(static)
       for (j = k + 1; j < _PB_N; j++)
 	{
 	  R[k][j] = SCALAR_VAL(0.0);

@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* gemm.c: this file is part of PolyBench/C */
+/* gemm-omp.c: OpenMP parallel version of gemm.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -89,7 +93,7 @@ void kernel_gemm(int ni, int nj, int nk,
   #pragma omp parallel
   {
     /* C := alpha*A*B + beta*C */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{

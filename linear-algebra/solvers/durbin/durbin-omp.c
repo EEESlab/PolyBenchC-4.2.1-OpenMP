@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* durbin.c: this file is part of PolyBench/C */
+/* durbin-omp.c: OpenMP parallel version of durbin.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -78,18 +82,18 @@ void kernel_durbin(int n,
    beta = (1-alpha*alpha)*beta;
    sum = SCALAR_VAL(0.0);
 
-   #pragma omp parallel for reduction(+:sum)
-   for (i=0; i<k; i++) {
+   #pragma omp parallel for reduction(+:sum) schedule(static)
+   for (i = 0; i < k; i++) {
       sum += r[k-i-1]*y[i];
    }
    alpha = - (r[k] + sum)/beta;
 
-   #pragma omp parallel for
-   for (i=0; i<k; i++) {
+   #pragma omp parallel for schedule(static)
+   for (i = 0; i < k; i++) {
       z[i] = y[i] + alpha*y[k-i-1];
    }
-   #pragma omp parallel for
-   for (i=0; i<k; i++) {
+   #pragma omp parallel for schedule(static)
+   for (i = 0; i < k; i++) {
      y[i] = z[i];
    }
    y[k] = alpha;

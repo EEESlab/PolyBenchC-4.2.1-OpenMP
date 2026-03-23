@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* gemver.c: this file is part of PolyBench/C */
+/* gemver-omp.c: OpenMP parallel version of gemver.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -99,21 +103,21 @@ void kernel_gemver(int n,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	A[i][j] = A[i][j] + u1[i] * v1[j] + u2[i] * v2[j];
 
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	x[i] = x[i] + beta * A[j][i] * y[j];
 
-    #pragma omp for
+    #pragma omp for schedule(static)
     for (i = 0; i < _PB_N; i++)
       x[i] = x[i] + z[i];
 
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	w[i] = w[i] +  alpha * A[i][j] * x[j];

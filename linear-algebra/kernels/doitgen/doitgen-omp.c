@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* doitgen.c: this file is part of PolyBench/C */
+/* doitgen-omp.c: OpenMP parallel version of doitgen.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -70,10 +74,10 @@ void kernel_doitgen(int nr, int nq, int np,
   int r, q, p, s;
 
 #pragma scop
-  #pragma omp parallel private (q, p, s)
+  #pragma omp parallel private(q, p, s)
   {
     DATA_TYPE sum_local[NP];
-    #pragma omp for
+    #pragma omp for schedule(static)
     for (r = 0; r < _PB_NR; r++)
       for (q = 0; q < _PB_NQ; q++)  {
 	for (p = 0; p < _PB_NP; p++)  {

@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* heat-3d.c: this file is part of PolyBench/C */
+/* heat-3d-omp.c: OpenMP parallel version of heat-3d.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -70,7 +74,7 @@ void kernel_heat_3d(int tsteps,
 
 #pragma scop
     for (t = 1; t <= TSTEPS; t++) {
-        #pragma omp parallel for private(j, k)
+        #pragma omp parallel for private(j, k) schedule(static)
         for (i = 1; i < _PB_N-1; i++) {
             for (j = 1; j < _PB_N-1; j++) {
                 for (k = 1; k < _PB_N-1; k++) {
@@ -81,7 +85,7 @@ void kernel_heat_3d(int tsteps,
                 }
             }
         }
-        #pragma omp parallel for private(j, k)
+        #pragma omp parallel for private(j, k) schedule(static)
         for (i = 1; i < _PB_N-1; i++) {
            for (j = 1; j < _PB_N-1; j++) {
                for (k = 1; k < _PB_N-1; k++) {

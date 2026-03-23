@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* 3mm.c: this file is part of PolyBench/C */
+/* 3mm-omp.c: OpenMP parallel version of 3mm.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -84,7 +88,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
   #pragma omp parallel
   {
     /* E := A*B */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -93,7 +97,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	    E[i][j] += A[i][k] * B[k][j];
 	}
     /* F := C*D */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NJ; i++)
       for (j = 0; j < _PB_NL; j++)
 	{
@@ -102,7 +106,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	    F[i][j] += C[i][k] * D[k][j];
 	}
     /* G := E*F */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)
 	{

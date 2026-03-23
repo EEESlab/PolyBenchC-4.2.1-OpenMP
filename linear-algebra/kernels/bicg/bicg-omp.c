@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* bicg.c: this file is part of PolyBench/C */
+/* bicg-omp.c: OpenMP parallel version of bicg.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -82,12 +86,12 @@ void kernel_bicg(int m, int n,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for
+    #pragma omp for schedule(static)
     for (i = 0; i < _PB_M; i++)
       s[i] = 0;
 
-    /* Compute q = A * p (parallelize on i, no race) */
-    #pragma omp for private (j)
+    /* Compute q = A * p */
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       {
 	q[i] = SCALAR_VAL(0.0);
@@ -95,8 +99,8 @@ void kernel_bicg(int m, int n,
 	  q[i] = q[i] + A[i][j] * p[j];
       }
 
-    /* Compute s = A^T * r (parallelize on j to avoid race on s[j]) */
-    #pragma omp for private (i)
+    /* Compute s = A^T * r */
+    #pragma omp for private(i) schedule(static)
     for (j = 0; j < _PB_M; j++)
       for (i = 0; i < _PB_N; i++)
 	s[j] = s[j] + r[i] * A[i][j];

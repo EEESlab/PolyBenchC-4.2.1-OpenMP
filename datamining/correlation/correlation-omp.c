@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* correlation.c: this file is part of PolyBench/C */
+/* correlation-omp.c: OpenMP parallel version of correlation.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -78,8 +82,8 @@ void kernel_correlation(int m, int n,
 #pragma scop
   #pragma omp parallel
   {
-    /* Determine mean of column vectors of input data matrix */
-    #pragma omp for private (i)
+    /* Determine mean of column vectors of input data matrix. */
+    #pragma omp for private(i) schedule(static)
     for (j = 0; j < _PB_M; j++)
       {
 	mean[j] = SCALAR_VAL(0.0);
@@ -89,7 +93,7 @@ void kernel_correlation(int m, int n,
       }
 
     /* Determine standard deviations of column vectors of data matrix. */
-    #pragma omp for private (i)
+    #pragma omp for private(i) schedule(static)
     for (j = 0; j < _PB_M; j++)
       {
 	stddev[j] = SCALAR_VAL(0.0);
@@ -100,13 +104,12 @@ void kernel_correlation(int m, int n,
 	/* The following in an inelegant but usual way to handle
 	   near-zero std. dev. values, which below would cause a zero-
 	   divide. */
-	/* stddev[j] = stddev[j] <= eps ? SCALAR_VAL(1.0) : stddev[j]; */
 	if (stddev[j] <= eps)
 	  stddev[j] = SCALAR_VAL(1.0);
       }
 
     /* Center and reduce the column vectors. */
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_M; j++)
 	{
@@ -115,7 +118,7 @@ void kernel_correlation(int m, int n,
 	}
 
     /* Calculate the m * m correlation matrix. */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(dynamic)
     for (i = 0; i < _PB_M-1; i++)
       {
 	corr[i][i] = SCALAR_VAL(1.0);

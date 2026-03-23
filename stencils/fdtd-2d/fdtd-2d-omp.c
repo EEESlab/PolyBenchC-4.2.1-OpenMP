@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* fdtd-2d.c: this file is part of PolyBench/C */
+/* fdtd-2d-omp.c: OpenMP parallel version of fdtd-2d.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -104,17 +108,17 @@ void kernel_fdtd_2d(int tmax,
       for (j = 0; j < _PB_NY; j++)
 	ey[0][j] = _fict_[t];
 
-      #pragma omp parallel for private(j)
+      #pragma omp parallel for private(j) schedule(static)
       for (i = 1; i < _PB_NX; i++)
 	for (j = 0; j < _PB_NY; j++)
 	  ey[i][j] = ey[i][j] - SCALAR_VAL(0.5)*(hz[i][j]-hz[i-1][j]);
 
-      #pragma omp parallel for private(j)
+      #pragma omp parallel for private(j) schedule(static)
       for (i = 0; i < _PB_NX; i++)
 	for (j = 1; j < _PB_NY; j++)
 	  ex[i][j] = ex[i][j] - SCALAR_VAL(0.5)*(hz[i][j]-hz[i][j-1]);
 
-      #pragma omp parallel for private(j)
+      #pragma omp parallel for private(j) schedule(static)
       for (i = 0; i < _PB_NX - 1; i++)
 	for (j = 0; j < _PB_NY - 1; j++)
 	  hz[i][j] = hz[i][j] - SCALAR_VAL(0.7)*  (ex[i][j+1] - ex[i][j] +

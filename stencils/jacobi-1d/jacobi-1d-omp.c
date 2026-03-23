@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* jacobi-1d.c: this file is part of PolyBench/C */
+/* jacobi-1d-omp.c: OpenMP parallel version of jacobi-1d.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -71,10 +75,10 @@ void kernel_jacobi_1d(int tsteps,
 #pragma scop
   for (t = 0; t < _PB_TSTEPS; t++)
     {
-      #pragma omp parallel for
+      #pragma omp parallel for schedule(static)
       for (i = 1; i < _PB_N - 1; i++)
 	B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
-      #pragma omp parallel for
+      #pragma omp parallel for schedule(static)
       for (i = 1; i < _PB_N - 1; i++)
 	A[i] = 0.33333 * (B[i-1] + B[i] + B[i + 1]);
     }

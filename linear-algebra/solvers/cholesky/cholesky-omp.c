@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* cholesky.c: this file is part of PolyBench/C */
+/* cholesky-omp.c: OpenMP parallel version of cholesky.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -99,7 +103,7 @@ void kernel_cholesky(int n,
      A[i][i] = SQRT_FUN(A[i][i]);
 
      // Sub-diagonal elements in column i (parallelizable)
-     #pragma omp parallel for private (k)
+     #pragma omp parallel for private(k) schedule(static)
      for (j = i + 1; j < _PB_N; j++) {
         for (k = 0; k < i; k++) {
            A[j][i] -= A[j][k] * A[i][k];

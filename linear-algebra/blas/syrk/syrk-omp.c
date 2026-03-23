@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* syrk.c: this file is part of PolyBench/C */
+/* syrk-omp.c: OpenMP parallel version of syrk.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -82,7 +86,7 @@ void kernel_syrk(int n, int m,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(dynamic)
     for (i = 0; i < _PB_N; i++) {
       for (j = 0; j <= i; j++)
 	C[i][j] *= beta;

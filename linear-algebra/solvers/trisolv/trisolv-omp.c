@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* trisolv.c: this file is part of PolyBench/C */
+/* trisolv-omp.c: OpenMP parallel version of trisolv.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -75,7 +79,7 @@ void kernel_trisolv(int n,
   for (i = 0; i < _PB_N; i++)
     {
       sum = SCALAR_VAL(0.0);
-      #pragma omp parallel for reduction(+:sum)
+      #pragma omp parallel for reduction(+:sum) schedule(static)
       for (j = 0; j < i; j++)
         sum += L[i][j] * x[j];
       x[i] = (b[i] - sum) / L[i][i];

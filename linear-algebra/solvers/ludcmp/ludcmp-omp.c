@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* ludcmp.c: this file is part of PolyBench/C */
+/* ludcmp-omp.c: OpenMP parallel version of ludcmp.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -113,7 +117,7 @@ void kernel_ludcmp(int n,
         A[i][j] = w / A[j][j];
     }
     /* U part (j >= i): parallelizable — each j writes to its own A[i][j] */
-    #pragma omp parallel for private (k, w)
+    #pragma omp parallel for private(k, w) schedule(static)
     for (j = i; j < _PB_N; j++) {
        w = A[i][j];
        for (k = 0; k < i; k++) {

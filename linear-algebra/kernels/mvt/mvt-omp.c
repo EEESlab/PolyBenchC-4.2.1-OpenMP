@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* mvt.c: this file is part of PolyBench/C */
+/* mvt-omp.c: OpenMP parallel version of mvt.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -87,11 +91,11 @@ void kernel_mvt(int n,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	x1[i] = x1[i] + A[i][j] * y_1[j];
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	x2[i] = x2[i] + A[j][i] * y_2[j];

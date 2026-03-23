@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* trmm.c: this file is part of PolyBench/C */
+/* trmm-omp.c: OpenMP parallel version of trmm.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -89,7 +93,7 @@ void kernel_trmm(int m, int n,
        that would occur if parallelizing on i, since B[i][j] reads B[k][j]
        for k > i. Each column is independent and processed sequentially
        over i to preserve the read-before-write ordering. */
-    #pragma omp for private (i, k)
+    #pragma omp for private(i, k) schedule(static)
     for (j = 0; j < _PB_N; j++)
        for (i = 0; i < _PB_M; i++) {
           for (k = i+1; k < _PB_M; k++)

@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* atax.c: this file is part of PolyBench/C */
+/* atax-omp.c: OpenMP parallel version of atax.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -73,12 +77,12 @@ void kernel_atax(int m, int n,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for
+    #pragma omp for schedule(static)
     for (i = 0; i < _PB_N; i++)
       y[i] = 0;
 
-    /* Compute tmp = A * x (parallelize on i, no race) */
-    #pragma omp for private (j)
+    /* Compute tmp = A * x */
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_M; i++)
       {
 	tmp[i] = SCALAR_VAL(0.0);
@@ -86,8 +90,8 @@ void kernel_atax(int m, int n,
 	  tmp[i] = tmp[i] + A[i][j] * x[j];
       }
 
-    /* Compute y = A^T * tmp (parallelize on j to avoid race on y[j]) */
-    #pragma omp for private (i)
+    /* Compute y = A^T * tmp */
+    #pragma omp for private(i) schedule(static)
     for (j = 0; j < _PB_N; j++)
       for (i = 0; i < _PB_M; i++)
 	y[j] = y[j] + A[i][j] * tmp[i];

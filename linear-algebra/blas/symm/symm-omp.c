@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* symm.c: this file is part of PolyBench/C */
+/* symm-omp.c: OpenMP parallel version of symm.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -95,7 +99,7 @@ void kernel_symm(int m, int n,
     /* Parallelizing on j (columns) avoids the race condition on C[k][j]
        that would occur if parallelizing on i, since for a fixed j all
        updates to column j happen sequentially within the same thread. */
-    #pragma omp for private (i, k, temp2)
+    #pragma omp for private(i, k, temp2) schedule(static)
     for (j = 0; j < _PB_N; j++)
        for (i = 0; i < _PB_M; i++)
        {

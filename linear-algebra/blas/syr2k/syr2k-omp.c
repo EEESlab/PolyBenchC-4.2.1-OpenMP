@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* syr2k.c: this file is part of PolyBench/C */
+/* syr2k-omp.c: OpenMP parallel version of syr2k.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -87,7 +91,7 @@ void kernel_syr2k(int n, int m,
 #pragma scop
   #pragma omp parallel
   {
-    #pragma omp for private (j, k) schedule(dynamic)
+    #pragma omp for private(j, k) schedule(dynamic)
     for (i = 0; i < _PB_N; i++) {
       for (j = 0; j <= i; j++)
 	C[i][j] *= beta;

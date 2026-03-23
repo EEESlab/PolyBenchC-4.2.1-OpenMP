@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* nussinov.c: this file is part of PolyBench/C */
+/* nussinov-omp.c: OpenMP parallel version of nussinov.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -88,7 +92,7 @@ void kernel_nussinov(int n, base POLYBENCH_1D(seq,N,n),
      (table[i][j-1], table[i+1][j], table[i+1][j-1], table[i][k], table[k+1][j])
      all lie on smaller diagonals (already computed). */
   for (d = 1; d < _PB_N; d++) {
-    #pragma omp parallel for private(j, k)
+    #pragma omp parallel for private(j, k) schedule(static)
     for (i = _PB_N - 1 - d; i >= 0; i--) {
       j = i + d;
 

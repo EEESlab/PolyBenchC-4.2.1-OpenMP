@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* adi.c: this file is part of PolyBench/C */
+/* adi-omp.c: OpenMP parallel version of adi.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -95,7 +99,7 @@ void kernel_adi(int tsteps, int n,
 
  for (t=1; t<=_PB_TSTEPS; t++) {
     //Column Sweep
-    #pragma omp parallel for private(j)
+    #pragma omp parallel for private(j) schedule(static)
     for (i=1; i<_PB_N-1; i++) {
       v[0][i] = SCALAR_VAL(1.0);
       p[i][0] = SCALAR_VAL(0.0);
@@ -111,7 +115,7 @@ void kernel_adi(int tsteps, int n,
       }
     }
     //Row Sweep
-    #pragma omp parallel for private(j)
+    #pragma omp parallel for private(j) schedule(static)
     for (i=1; i<_PB_N-1; i++) {
       u[i][0] = SCALAR_VAL(1.0);
       p[i][0] = SCALAR_VAL(0.0);

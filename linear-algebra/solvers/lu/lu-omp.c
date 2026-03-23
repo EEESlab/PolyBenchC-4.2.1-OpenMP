@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* lu.c: this file is part of PolyBench/C */
+/* lu-omp.c: OpenMP parallel version of lu.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -99,7 +103,7 @@ void kernel_lu(int n,
     /* U part (j >= i): parallelizable — each j writes to its own A[i][j],
        reads A[i][k] (k<i, finalized in L part above) and A[k][j] (k<i,
        from previous rows) */
-    #pragma omp parallel for private (k)
+    #pragma omp parallel for private(k) schedule(static)
     for (j = i; j < _PB_N; j++) {
        for (k = 0; k < i; k++) {
           A[i][j] -= A[i][k] * A[k][j];

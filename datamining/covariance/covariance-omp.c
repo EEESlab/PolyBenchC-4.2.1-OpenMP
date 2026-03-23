@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* covariance.c: this file is part of PolyBench/C */
+/* covariance-omp.c: OpenMP parallel version of covariance.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -72,8 +76,8 @@ void kernel_covariance(int m, int n,
 #pragma scop
   #pragma omp parallel
   {
-    /* Determine mean of column vectors of input data matrix */
-    #pragma omp for private (i)
+    /* Determine mean of column vectors of input data matrix. */
+    #pragma omp for private(i) schedule(static)
     for (j = 0; j < _PB_M; j++)
       {
 	mean[j] = SCALAR_VAL(0.0);
@@ -83,13 +87,13 @@ void kernel_covariance(int m, int n,
       }
 
     /* Center the column vectors. */
-    #pragma omp for private (j)
+    #pragma omp for private(j) schedule(static)
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_M; j++)
 	data[i][j] -= mean[j];
 
     /* Calculate the m * m covariance matrix. */
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(dynamic)
     for (i = 0; i < _PB_M; i++)
       for (j = i; j < _PB_M; j++)
 	{

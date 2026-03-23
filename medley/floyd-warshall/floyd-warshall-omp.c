@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* floyd-warshall.c: this file is part of PolyBench/C */
+/* floyd-warshall-omp.c: OpenMP parallel version of floyd-warshall.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -72,7 +76,7 @@ void kernel_floyd_warshall(int n,
       /* For a given k, each (i,j) is independent:
          reads path[i][k] and path[k][j] (row/col k, not modified
          when weights are non-negative), writes path[i][j]. */
-      #pragma omp parallel for private (j)
+      #pragma omp parallel for private(j) schedule(static)
       for(i = 0; i < _PB_N; i++)
 	for (j = 0; j < _PB_N; j++)
 	  /* path[i][j] = path[i][j] < path[i][k] + path[k][j] ?

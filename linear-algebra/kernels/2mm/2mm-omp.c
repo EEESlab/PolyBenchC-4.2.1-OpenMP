@@ -7,12 +7,16 @@
  *
  * Web address: http://polybench.sourceforge.net
  */
-/* 2mm.c: this file is part of PolyBench/C */
+/* 2mm-omp.c: OpenMP parallel version of 2mm.
+ * This file is part of PolyBench/C, with OpenMP annotations
+ * added by Luca Parigi.
+ */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -88,7 +92,7 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
   /* D := alpha*A*B*C + beta*D */
   #pragma omp parallel
   {
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -96,7 +100,7 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 	  for (k = 0; k < _PB_NK; ++k)
 	    tmp[i][j] += alpha * A[i][k] * B[k][j];
 	}
-    #pragma omp for private (j, k)
+    #pragma omp for private(j, k) schedule(static)
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)
 	{
