@@ -89,7 +89,7 @@ void kernel_nussinov(int n, base POLYBENCH_1D(seq,N,n),
      all lie on smaller diagonals (already computed). */
   for (d = 1; d < _PB_N; d++) {
     #pragma omp parallel for private(j, k)
-    for (i = _PB_N - 1 - d; i >= 0; i--) {
+    for (i = 0; i <= _PB_N - 1 - d; i++) {
       j = i + d;
 
       if (j-1>=0)

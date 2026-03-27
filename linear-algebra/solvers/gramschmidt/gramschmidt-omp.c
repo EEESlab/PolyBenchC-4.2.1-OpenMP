@@ -93,19 +93,22 @@ void kernel_gramschmidt(int m, int n,
         nrm += A[i][k] * A[i][k];
       R[k][k] = SQRT_FUN(nrm);
 
-      #pragma omp parallel for
-      for (i = 0; i < _PB_M; i++)
-        Q[i][k] = A[i][k] / R[k][k];
+      #pragma omp parallel private (i, j)
+      {
+        #pragma omp for
+        for (i = 0; i < _PB_M; i++)
+          Q[i][k] = A[i][k] / R[k][k];
 
-      #pragma omp parallel for private (i)
-      for (j = k + 1; j < _PB_N; j++)
-	{
-	  R[k][j] = SCALAR_VAL(0.0);
-	  for (i = 0; i < _PB_M; i++)
-	    R[k][j] += Q[i][k] * A[i][j];
-	  for (i = 0; i < _PB_M; i++)
-	    A[i][j] = A[i][j] - Q[i][k] * R[k][j];
-	}
+        #pragma omp for
+        for (j = k + 1; j < _PB_N; j++)
+	  {
+	    R[k][j] = SCALAR_VAL(0.0);
+	    for (i = 0; i < _PB_M; i++)
+	      R[k][j] += Q[i][k] * A[i][j];
+	    for (i = 0; i < _PB_M; i++)
+	      A[i][j] = A[i][j] - Q[i][k] * R[k][j];
+	  }
+      }
     }
 #pragma endscop
 

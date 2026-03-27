@@ -86,9 +86,9 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 
 #pragma scop
   /* D := alpha*A*B*C + beta*D */
-  #pragma omp parallel
+  #pragma omp parallel private (j, k)
   {
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -96,7 +96,7 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 	  for (k = 0; k < _PB_NK; ++k)
 	    tmp[i][j] += alpha * A[i][k] * B[k][j];
 	}
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)
 	{

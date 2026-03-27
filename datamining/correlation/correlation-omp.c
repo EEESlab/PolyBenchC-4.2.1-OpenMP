@@ -76,10 +76,10 @@ void kernel_correlation(int m, int n,
 
 
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (i, j, k)
   {
     /* Determine mean of column vectors of input data matrix */
-    #pragma omp for private (i)
+    #pragma omp for
     for (j = 0; j < _PB_M; j++)
       {
 	mean[j] = SCALAR_VAL(0.0);
@@ -89,7 +89,7 @@ void kernel_correlation(int m, int n,
       }
 
     /* Determine standard deviations of column vectors of data matrix. */
-    #pragma omp for private (i)
+    #pragma omp for
     for (j = 0; j < _PB_M; j++)
       {
 	stddev[j] = SCALAR_VAL(0.0);
@@ -106,7 +106,7 @@ void kernel_correlation(int m, int n,
       }
 
     /* Center and reduce the column vectors. */
-    #pragma omp for private (j)
+    #pragma omp for
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_M; j++)
 	{
@@ -115,7 +115,7 @@ void kernel_correlation(int m, int n,
 	}
 
     /* Calculate the m * m correlation matrix. */
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_M-1; i++)
       {
 	corr[i][i] = SCALAR_VAL(1.0);

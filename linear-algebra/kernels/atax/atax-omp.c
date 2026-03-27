@@ -71,14 +71,14 @@ void kernel_atax(int m, int n,
   int i, j;
 
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private(i, j)
   {
     #pragma omp for
     for (i = 0; i < _PB_N; i++)
       y[i] = 0;
 
     /* Compute tmp = A * x (parallelize on i, no race) */
-    #pragma omp for private (j)
+    #pragma omp for
     for (i = 0; i < _PB_M; i++)
       {
 	tmp[i] = SCALAR_VAL(0.0);
@@ -87,7 +87,7 @@ void kernel_atax(int m, int n,
       }
 
     /* Compute y = A^T * tmp (parallelize on j to avoid race on y[j]) */
-    #pragma omp for private (i)
+    #pragma omp for
     for (j = 0; j < _PB_N; j++)
       for (i = 0; i < _PB_M; i++)
 	y[j] = y[j] + A[i][j] * tmp[i];

@@ -80,9 +80,9 @@ void kernel_syrk(int n, int m,
 //A is NxM
 //C is NxN
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (j, k)
   {
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_N; i++) {
       for (j = 0; j <= i; j++)
 	C[i][j] *= beta;

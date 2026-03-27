@@ -80,14 +80,14 @@ void kernel_bicg(int m, int n,
   int i, j;
 
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private(i, j)
   {
     #pragma omp for
     for (i = 0; i < _PB_M; i++)
       s[i] = 0;
 
     /* Compute q = A * p (parallelize on i, no race) */
-    #pragma omp for private (j)
+    #pragma omp for
     for (i = 0; i < _PB_N; i++)
       {
 	q[i] = SCALAR_VAL(0.0);
@@ -96,7 +96,7 @@ void kernel_bicg(int m, int n,
       }
 
     /* Compute s = A^T * r (parallelize on j to avoid race on s[j]) */
-    #pragma omp for private (i)
+    #pragma omp for
     for (j = 0; j < _PB_M; j++)
       for (i = 0; i < _PB_N; i++)
 	s[j] = s[j] + r[i] * A[i][j];

@@ -90,12 +90,12 @@ void kernel_symm(int m, int n,
 // C is MxN
 //note that due to Fortran array layout, the code below more closely resembles upper triangular case in BLAS
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (i, k, temp2)
   {
     /* Parallelizing on j (columns) avoids the race condition on C[k][j]
        that would occur if parallelizing on i, since for a fixed j all
        updates to column j happen sequentially within the same thread. */
-    #pragma omp for private (i, k, temp2)
+    #pragma omp for
     for (j = 0; j < _PB_N; j++)
        for (i = 0; i < _PB_M; i++)
        {

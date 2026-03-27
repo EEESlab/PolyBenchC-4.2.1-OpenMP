@@ -1,0 +1,29 @@
+# MLIR intermediate files
+*.mlir
+
+# LLVM IR files
+*.ll
+
+# CIR intermediate files
+*.cir
+
+# Executables (Linux/macOS - no extension)
+# Catch common binary output names
+a.out
+*.out
+*.exe
+*.bin
+
+# polybench utility objects
+*.o
+
+# ELF binaries (catch-all for extensionless executables)
+# Git doesn't detect binary vs text automatically in .gitignore,
+# so list specific build output dirs or names as needed:
+build/
+bin/
+
+# Polybench compiled executables (no extension)
+*_gcc
+*_opt
+*_ref

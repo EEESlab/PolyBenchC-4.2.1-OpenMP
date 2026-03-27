@@ -9,10 +9,16 @@
  */
 /* gemm.c: this file is part of PolyBench/C */
 
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
+#define UINTPTR_MAX (~(uintptr_t)0)
+
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <stddef.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -86,10 +92,10 @@ void kernel_gemm(int ni, int nj, int nk,
 //B is NKxNJ
 //C is NIxNJ
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (j, k)
   {
     /* C := alpha*A*B + beta*C */
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{

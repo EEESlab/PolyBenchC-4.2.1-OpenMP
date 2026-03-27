@@ -81,10 +81,10 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
   int i, j, k;
 
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (j, k)
   {
     /* E := A*B */
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -93,7 +93,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	    E[i][j] += A[i][k] * B[k][j];
 	}
     /* F := C*D */
-    #pragma omp for private (j, k)
+    #pragma omp for 
     for (i = 0; i < _PB_NJ; i++)
       for (j = 0; j < _PB_NL; j++)
 	{
@@ -102,7 +102,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	    F[i][j] += C[i][k] * D[k][j];
 	}
     /* G := E*F */
-    #pragma omp for private (j, k)
+    #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)
 	{

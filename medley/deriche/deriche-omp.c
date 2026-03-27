@@ -85,9 +85,11 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
    b2 = -EXP_FUN(SCALAR_VAL(-2.0)*alpha);
    c1 = c2 = 1;
 
-   /* Horizontal pass: each row i is independent */
-   #pragma omp parallel for private (j)
-   for (i=0; i<_PB_W; i++) {
+   #pragma omp parallel private (i, j)
+   {
+    /* Horizontal pass: each row i is independent */
+    #pragma omp for
+    for (i=0; i<_PB_W; i++) {
         DATA_TYPE ym1 = SCALAR_VAL(0.0);
         DATA_TYPE ym2 = SCALAR_VAL(0.0);
         DATA_TYPE xm1 = SCALAR_VAL(0.0);
@@ -99,7 +101,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp for
     for (i=0; i<_PB_W; i++) {
         DATA_TYPE yp1 = SCALAR_VAL(0.0);
         DATA_TYPE yp2 = SCALAR_VAL(0.0);
@@ -114,14 +116,14 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp for
     for (i=0; i<_PB_W; i++)
         for (j=0; j<_PB_H; j++) {
             imgOut[i][j] = c1 * (y1[i][j] + y2[i][j]);
         }
 
     /* Vertical pass: each column j is independent */
-    #pragma omp parallel for private (i)
+    #pragma omp for
     for (j=0; j<_PB_H; j++) {
         DATA_TYPE tm1 = SCALAR_VAL(0.0);
         DATA_TYPE ym1 = SCALAR_VAL(0.0);
@@ -134,7 +136,7 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (i)
+    #pragma omp for
     for (j=0; j<_PB_H; j++) {
         DATA_TYPE tp1 = SCALAR_VAL(0.0);
         DATA_TYPE tp2 = SCALAR_VAL(0.0);
@@ -149,10 +151,11 @@ void kernel_deriche(int w, int h, DATA_TYPE alpha,
         }
     }
 
-    #pragma omp parallel for private (j)
+    #pragma omp for
     for (i=0; i<_PB_W; i++)
         for (j=0; j<_PB_H; j++)
             imgOut[i][j] = c2*(y1[i][j] + y2[i][j]);
+   }
 
 #pragma endscop
 }

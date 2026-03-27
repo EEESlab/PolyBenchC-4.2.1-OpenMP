@@ -80,9 +80,9 @@ void kernel_gesummv(int n,
   int i, j;
 
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (j)
   {
-    #pragma omp for private (j)
+    #pragma omp for
     for (i = 0; i < _PB_N; i++)
       {
 	tmp[i] = SCALAR_VAL(0.0);

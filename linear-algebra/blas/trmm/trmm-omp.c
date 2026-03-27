@@ -83,13 +83,13 @@ void kernel_trmm(int m, int n,
 // A is MxM
 // B is MxN
 #pragma scop
-  #pragma omp parallel
+  #pragma omp parallel private (i, k)
   {
     /* Parallelizing on j (columns) avoids the race condition on B[k][j]
        that would occur if parallelizing on i, since B[i][j] reads B[k][j]
        for k > i. Each column is independent and processed sequentially
        over i to preserve the read-before-write ordering. */
-    #pragma omp for private (i, k)
+    #pragma omp for
     for (j = 0; j < _PB_N; j++)
        for (i = 0; i < _PB_M; i++) {
           for (k = i+1; k < _PB_M; k++)
