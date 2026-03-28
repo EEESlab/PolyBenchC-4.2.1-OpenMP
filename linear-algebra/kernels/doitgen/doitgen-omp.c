@@ -89,9 +89,16 @@ void kernel_doitgen(int nr, int nq, int np,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int nr = NR;
   int nq = NQ;
@@ -129,5 +136,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(sum);
   POLYBENCH_FREE_ARRAY(C4);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

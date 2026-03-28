@@ -125,9 +125,16 @@ void kernel_nussinov(int n, base POLYBENCH_1D(seq,N,n),
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
 
@@ -156,5 +163,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(seq);
   POLYBENCH_FREE_ARRAY(table);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

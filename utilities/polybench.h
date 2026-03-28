@@ -29,6 +29,10 @@
 
 # include <stdlib.h>
 
+#ifdef PULP_TARGET
+#define fprintf(stream, ...) printf(__VA_ARGS__)
+#endif
+
 /* Array padding. By default, none is used. */
 # ifndef POLYBENCH_PADDING_FACTOR
 /* default: */
@@ -161,11 +165,18 @@
 #  define POLYBENCH_DCE_ONLY_CODE
 # endif
 
+#ifdef PULP_TARGET
+#define POLYBENCH_DUMP_START    printf("==BEGIN DUMP_ARRAYS==\n")
+#define POLYBENCH_DUMP_FINISH   printf("==END   DUMP_ARRAYS==\n")
+#define POLYBENCH_DUMP_BEGIN(s) printf("begin dump: %s", s)
+#define POLYBENCH_DUMP_END(s)   printf("\nend   dump: %s\n", s)
+#else
 #define POLYBENCH_DUMP_TARGET stderr
 #define POLYBENCH_DUMP_START    fprintf(POLYBENCH_DUMP_TARGET, "==BEGIN DUMP_ARRAYS==\n")
 #define POLYBENCH_DUMP_FINISH   fprintf(POLYBENCH_DUMP_TARGET, "==END   DUMP_ARRAYS==\n")
 #define POLYBENCH_DUMP_BEGIN(s) fprintf(POLYBENCH_DUMP_TARGET, "begin dump: %s", s)
 #define POLYBENCH_DUMP_END(s)   fprintf(POLYBENCH_DUMP_TARGET, "\nend   dump: %s\n", s)
+#endif
 
 # define polybench_prevent_dce(func)		\
   POLYBENCH_DCE_ONLY_CODE			\

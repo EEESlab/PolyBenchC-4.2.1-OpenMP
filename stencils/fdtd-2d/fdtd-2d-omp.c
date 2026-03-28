@@ -127,9 +127,16 @@ void kernel_fdtd_2d(int tmax,
 #pragma endscop
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int tmax = TMAX;
   int nx = NX;
@@ -175,5 +182,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(hz);
   POLYBENCH_FREE_ARRAY(_fict_);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

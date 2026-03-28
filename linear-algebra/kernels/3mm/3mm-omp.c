@@ -115,9 +115,16 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int ni = NI;
   int nj = NJ;
@@ -171,5 +178,8 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(D);
   POLYBENCH_FREE_ARRAY(G);
 
+
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

@@ -97,9 +97,16 @@ void kernel_heat_3d(int tsteps,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
   int tsteps = TSTEPS;
@@ -129,5 +136,7 @@ int main(int argc, char** argv)
   /* Be clean. */
   POLYBENCH_FREE_ARRAY(A);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

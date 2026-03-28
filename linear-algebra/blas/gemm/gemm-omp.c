@@ -9,8 +9,10 @@
  */
 /* gemm.c: this file is part of PolyBench/C */
 
+#ifndef PULP_TARGET
 typedef long intptr_t;
 typedef unsigned long uintptr_t;
+#endif
 #define UINTPTR_MAX (~(uintptr_t)0)
 
 
@@ -25,7 +27,6 @@ typedef unsigned long uintptr_t;
 
 /* Include benchmark-specific header. */
 #include "gemm.h"
-
 
 /* Array initialization. */
 static
@@ -108,9 +109,16 @@ void kernel_gemm(int ni, int nj, int nk,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int ni = NI;
   int nj = NJ;
@@ -152,5 +160,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(A);
   POLYBENCH_FREE_ARRAY(B);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

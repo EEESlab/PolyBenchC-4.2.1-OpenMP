@@ -99,9 +99,16 @@ void kernel_durbin(int n,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
 
@@ -133,5 +140,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(r);
   POLYBENCH_FREE_ARRAY(y);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

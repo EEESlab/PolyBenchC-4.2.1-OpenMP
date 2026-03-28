@@ -23,6 +23,10 @@
 # include <omp.h>
 #endif
 
+#ifdef PULP_TARGET
+#include "pmsis.h"
+#endif
+
 #if defined(POLYBENCH_PAPI)
 # undef POLYBENCH_PAPI
 # include "polybench.h"
@@ -83,12 +87,16 @@ static
 double rtclock()
 {
 #if defined(POLYBENCH_TIME) || defined(POLYBENCH_GFLOPS)
+#ifdef PULP_TARGET
+    return pi_time_get_us();
+#else
     struct timeval Tp;
     int stat;
     stat = gettimeofday (&Tp, NULL);
     if (stat != 0)
       printf ("Error return from gettimeofday: %d", stat);
     return (Tp.tv_sec + Tp.tv_usec * 1.0e-6);
+#endif
 #else
     return 0;
 #endif
@@ -111,6 +119,9 @@ unsigned long long int rdtsc()
 
 void polybench_flush_cache()
 {
+#ifdef PULP_TARGET
+  // No cache
+#else
   int cs = POLYBENCH_CACHE_SIZE_KB * 1024 / sizeof(double);
   double* flush = (double*) calloc (cs, sizeof(double));
   int i;
@@ -122,6 +133,7 @@ void polybench_flush_cache()
     tmp += flush[i];
   assert (tmp <= 10.0);
   free (flush);
+#endif // !PULP_TARGET
 }
 
 
@@ -352,28 +364,40 @@ void polybench_papi_print()
 
 void polybench_prepare_instruments()
 {
+#ifdef PULP_TARGET
+  pi_perf_conf(1 << PI_PERF_CYCLES);
+#else
 #ifndef POLYBENCH_NO_FLUSH_CACHE
   polybench_flush_cache ();
 #endif
 #ifdef POLYBENCH_LINUX_FIFO_SCHEDULER
   polybench_linux_fifo_scheduler ();
 #endif
+#endif
 }
 
 
 void polybench_timer_start()
 {
+#ifdef PULP_TARGET
+  pi_perf_reset();
+  pi_perf_start();
+#else
   polybench_prepare_instruments ();
 #ifndef POLYBENCH_CYCLE_ACCURATE_TIMER
   polybench_t_start = rtclock ();
 #else
   polybench_c_start = rdtsc ();
 #endif
+#endif
 }
 
 
 void polybench_timer_stop()
 {
+#ifdef PULP_TARGET
+  pi_perf_stop();
+#else
 #ifndef POLYBENCH_CYCLE_ACCURATE_TIMER
   polybench_t_end = rtclock ();
 #else
@@ -382,11 +406,17 @@ void polybench_timer_stop()
 #ifdef POLYBENCH_LINUX_FIFO_SCHEDULER
   polybench_linux_standard_scheduler ();
 #endif
+#endif
 }
 
 
 void polybench_timer_print()
 {
+#ifdef PULP_TARGET
+  unsigned int cycles;
+  cycles = pi_perf_read(PI_PERF_CYCLES);
+  printf("Cycles = %lu\n", (unsigned long) cycles);
+#else
 #ifdef POLYBENCH_GFLOPS
       if  (polybench_program_total_flops == 0)
 	{
@@ -403,6 +433,7 @@ void polybench_timer_print()
 # else
       printf ("%Ld\n", polybench_c_end - polybench_c_start);
 # endif
+#endif
 #endif
 }
 
@@ -511,7 +542,16 @@ void check_alloc_table_state()
 
 #endif // !POLYBENCH_ENABLE_INTARRAY_PAD
 
+#ifdef PULP_TARGET
+extern struct pi_device cluster_dev;
+static
+void*
+xmalloc(size_t alloc_sz)
+{
+  return pi_l1_malloc(&cluster_dev, alloc_sz);
+}
 
+#else
 static
 void*
 xmalloc(size_t alloc_sz)
@@ -542,8 +582,13 @@ xmalloc(size_t alloc_sz)
 
   return ret;
 }
+#endif
 
-
+#ifdef PULP_TARGET
+void polybench_free_data(void* ptr)
+{
+}
+#else
 void polybench_free_data(void* ptr)
 {
 #ifdef POLYBENCH_ENABLE_INTARRAY_PAD
@@ -552,6 +597,7 @@ void polybench_free_data(void* ptr)
   free (ptr);
 #endif
 }
+#endif
 
 
 void* polybench_alloc_data(unsigned long long int n, int elt_size)

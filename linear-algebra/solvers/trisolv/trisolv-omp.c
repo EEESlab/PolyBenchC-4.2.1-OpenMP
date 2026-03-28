@@ -84,9 +84,16 @@ void kernel_trisolv(int n,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
 
@@ -118,5 +125,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(x);
   POLYBENCH_FREE_ARRAY(b);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

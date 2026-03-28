@@ -105,9 +105,16 @@ void kernel_bicg(int m, int n,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
   int m = M;
@@ -151,5 +158,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(p);
   POLYBENCH_FREE_ARRAY(r);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

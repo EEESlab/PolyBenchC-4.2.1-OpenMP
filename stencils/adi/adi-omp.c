@@ -129,9 +129,16 @@ void kernel_adi(int tsteps, int n,
 #pragma endscop
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
   int tsteps = TSTEPS;
@@ -166,5 +173,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(p);
   POLYBENCH_FREE_ARRAY(q);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

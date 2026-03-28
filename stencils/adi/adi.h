@@ -18,7 +18,7 @@
 # if !defined(TSTEPS) && !defined(N)
 /* Define sample dataset sizes. */
 #  ifdef MINI_DATASET
-#   define TSTEPS 20
+#   define TSTEPS 10
 #   define N 20
 #  endif
 

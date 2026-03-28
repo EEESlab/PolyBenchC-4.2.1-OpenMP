@@ -121,9 +121,16 @@ void kernel_gemver(int n,
 #pragma endscop
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
 
@@ -187,5 +194,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(y);
   POLYBENCH_FREE_ARRAY(z);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

@@ -86,8 +86,16 @@ void kernel_jacobi_2d(int tsteps,
 }
 
 
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
   int tsteps = TSTEPS;
@@ -118,5 +126,7 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(A);
   POLYBENCH_FREE_ARRAY(B);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }

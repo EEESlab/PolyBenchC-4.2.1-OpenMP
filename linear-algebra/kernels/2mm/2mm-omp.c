@@ -109,9 +109,16 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 
 }
 
-
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int ni = NI;
   int nj = NJ;
@@ -161,5 +168,8 @@ int main(int argc, char** argv)
   POLYBENCH_FREE_ARRAY(C);
   POLYBENCH_FREE_ARRAY(D);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
+
 }
