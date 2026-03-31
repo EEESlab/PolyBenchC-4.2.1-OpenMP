@@ -18,38 +18,38 @@
 # if !defined(NI) && !defined(NJ) && !defined(NK) && !defined(NL)
 /* Define sample dataset sizes. */
 #  ifdef MINI_DATASET
-#   define NI 16
-#   define NJ 18
-#   define NK 22
-#   define NL 24
+#   define NI 32
+#   define NJ 32
+#   define NK 32
+#   define NL 32
 #  endif
 
 #  ifdef SMALL_DATASET
-#   define NI 40
-#   define NJ 50
-#   define NK 70
-#   define NL 80
+#   define NI 128
+#   define NJ 128
+#   define NK 128
+#   define NL 128
 #  endif
 
 #  ifdef MEDIUM_DATASET
-#   define NI 180
-#   define NJ 190
-#   define NK 210
-#   define NL 220
+#   define NI 1024
+#   define NJ 1024
+#   define NK 1024
+#   define NL 1024
 #  endif
 
 #  ifdef LARGE_DATASET
-#   define NI 800
-#   define NJ 900
-#   define NK 1100
-#   define NL 1200
+#   define NI 2000
+#   define NJ 2000
+#   define NK 2000
+#   define NL 2000
 #  endif
 
 #  ifdef EXTRALARGE_DATASET
-#   define NI 1600
-#   define NJ 1800
-#   define NK 2200
-#   define NL 2400
+#   define NI 4000
+#   define NJ 4000
+#   define NK 4000
+#   define NL 4000
 #  endif
 
 
