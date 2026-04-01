@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -70,17 +71,24 @@ void kernel_trisolv(int n,
 {
   int i, j;
   DATA_TYPE sum;
+  DATA_TYPE *tmp = (DATA_TYPE *)malloc(n * sizeof(DATA_TYPE));
 
 #pragma scop
   for (i = 0; i < _PB_N; i++)
     {
-      sum = SCALAR_VAL(0.0);
-      #pragma omp parallel for reduction(+:sum)
+      #pragma omp parallel for private(j)
       for (j = 0; j < i; j++)
-        sum += L[i][j] * x[j];
+        tmp[j] = L[i][j] * x[j];
+
+      sum = SCALAR_VAL(0.0);
+      for (j = 0; j < i; j++)
+        sum += tmp[j];
+
       x[i] = (b[i] - sum) / L[i][i];
     }
 #pragma endscop
+
+  free(tmp);
 
 }
 
