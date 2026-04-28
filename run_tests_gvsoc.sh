@@ -35,8 +35,8 @@ KERNELS=(
   "./medley/floyd-warshall/floyd-warshall-omp.c"
   "./medley/deriche/deriche-omp.c"
   "./medley/nussinov/nussinov-omp.c"
+  "./stencils/seidel-2d/seidel-2d-omp.c"
 )
-
 
 kernel_name() {
   local path="$1"
@@ -57,6 +57,9 @@ run_case() {
   local kernel="$1"
   local case_id="$2"
   local logfile
+  local cycles
+  local bytes
+
   logfile="$(mktemp)"
 
   echo "Running ${kernel} - case${case_id}..." >&2
@@ -83,29 +86,32 @@ run_case() {
       ;;
   esac
 
-  local cycles
   cycles="$(extract_cycles "$logfile")"
   rm -f "$logfile"
 
   if [[ -z "${cycles:-}" ]]; then
     echo "WARNING: could not extract cycles for ${kernel} case${case_id}" >&2
-    printf 'NA\n'
-  else
-    printf '%s\n' "$cycles"
+    cycles="NA"
   fi
+
+  bytes="$(stat -c%s "BUILD/GAP8_V3/GCC_RISCV_PULPOS/test" 2>/dev/null)" || bytes="NA"
+  [[ -n "${bytes:-}" ]] || bytes="NA"
+
+  # Return both values on one line, separated by ;
+  printf '%s;%s\n' "$cycles" "$bytes"
 }
 
-echo "kernel;case1;case2;case3;case4" > "$OUTPUT_CSV"
+echo "kernel;ref_seq_cycles;ref_par_cycles;opt_seq_cycles;opt_par_cycles;b1;b2;b3;b4" > "$OUTPUT_CSV"
 
 for kernel in "${KERNELS[@]}"; do
   name="$(kernel_name "$kernel")"
 
-  c1="$(run_case "$kernel" 1)"
-  c2="$(run_case "$kernel" 2)"
-  c3="$(run_case "$kernel" 3)"
-  c4="$(run_case "$kernel" 4)"
+  IFS=';' read -r c1 b1 <<< "$(run_case "$kernel" 1)"
+  IFS=';' read -r c2 b2 <<< "$(run_case "$kernel" 2)"
+  IFS=';' read -r c3 b3 <<< "$(run_case "$kernel" 3)"
+  IFS=';' read -r c4 b4 <<< "$(run_case "$kernel" 4)"
 
-  echo "${name};${c1};${c2};${c3};${c4}" >> "$OUTPUT_CSV"
+  echo "${name};${c1};${c2};${c3};${c4};${b1};${b2};${b3};${b4}" >> "$OUTPUT_CSV"
 done
 
 echo "Done. Results written to ${OUTPUT_CSV}" >&2

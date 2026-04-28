@@ -71,6 +71,7 @@ void kernel_seidel_2d(int tsteps,
 
 #pragma scop
   for (t = 0; t <= _PB_TSTEPS - 1; t++)
+    #pragma omp parallel for private(j) 
     for (i = 1; i<= _PB_N - 2; i++)
       for (j = 1; j <= _PB_N - 2; j++)
 	A[i][j] = (A[i-1][j-1] + A[i-1][j] + A[i-1][j+1]
@@ -81,8 +82,16 @@ void kernel_seidel_2d(int tsteps,
 }
 
 
+#ifdef PULP_TARGET
+void cluster_main()
+#else
 int main(int argc, char** argv)
+#endif
 {
+#ifdef PULP_TARGET
+  volatile int argc = 1;
+  volatile char *argv[] = { "", NULL };
+#endif
   /* Retrieve problem size. */
   int n = N;
   int tsteps = TSTEPS;
@@ -111,5 +120,7 @@ int main(int argc, char** argv)
   /* Be clean. */
   POLYBENCH_FREE_ARRAY(A);
 
+#ifndef PULP_TARGET
   return 0;
+#endif
 }
