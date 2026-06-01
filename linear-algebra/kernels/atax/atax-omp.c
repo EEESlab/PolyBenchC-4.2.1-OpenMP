@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -69,22 +70,31 @@ void kernel_atax(int m, int n,
 		 DATA_TYPE POLYBENCH_1D(tmp,M,m))
 {
   int i, j;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
-  #pragma omp parallel private(i, j)
+  #pragma omp parallel num_threads(nthr) private(i, j)
   {
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
     #pragma omp for
     for (i = 0; i < _PB_N; i++)
       y[i] = 0;
 
-    /* Compute tmp = A * x (parallelize on i, no race) */
-    #pragma omp for
+    /* Compute tmp = A * x (parallelize on i, no race).
+       nowait suppresses the implicit end-of-for barrier; the explicit
+       `#pragma omp barrier` below provides the necessary synchronisation
+       before the next loop reads tmp. */
+    #pragma omp for nowait
     for (i = 0; i < _PB_M; i++)
       {
 	tmp[i] = SCALAR_VAL(0.0);
 	for (j = 0; j < _PB_N; j++)
 	  tmp[i] = tmp[i] + A[i][j] * x[j];
       }
+
+    #pragma omp barrier
 
     /* Compute y = A^T * tmp (parallelize on j to avoid race on y[j]) */
     #pragma omp for
