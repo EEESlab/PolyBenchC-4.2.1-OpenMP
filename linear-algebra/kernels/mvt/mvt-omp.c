@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -83,11 +84,19 @@ void kernel_mvt(int n,
 		DATA_TYPE POLYBENCH_2D(A,N,N,n,n))
 {
   int i, j;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
-  #pragma omp parallel private(j)
+  #pragma omp parallel num_threads(nthr) private(j)
   {
-    #pragma omp for
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
+    /* x1 and x2 are independent (distinct outputs, only reads of A/y_1/y_2),
+       so the first loop carries a nowait: the implicit end-of-for barrier is
+       unnecessary here and just wastes a synchronisation. The implicit
+       barrier at the end of the second loop closes the region. */
+    #pragma omp for nowait
     for (i = 0; i < _PB_N; i++)
       for (j = 0; j < _PB_N; j++)
 	x1[i] = x1[i] + A[i][j] * y_1[j];

@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -67,17 +68,28 @@ void kernel_jacobi_1d(int tsteps,
 			    DATA_TYPE POLYBENCH_1D(B,N,n))
 {
   int t, i;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
-  for (t = 0; t < _PB_TSTEPS; t++)
-    {
-      #pragma omp parallel for
-      for (i = 1; i < _PB_N - 1; i++)
-	B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
-      #pragma omp parallel for
-      for (i = 1; i < _PB_N - 1; i++)
-	A[i] = 0.33333 * (B[i-1] + B[i] + B[i + 1]);
-    }
+  /* One parallel region for the whole time loop: the team is created once
+     instead of being re-spawned twice per timestep. The implicit barrier at
+     the end of each `#pragma omp for` separates the two phases (B reads A,
+     then A reads B) and synchronises before the next timestep. */
+  #pragma omp parallel num_threads(nthr) private(t, i)
+  {
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
+    for (t = 0; t < _PB_TSTEPS; t++)
+      {
+        #pragma omp for
+        for (i = 1; i < _PB_N - 1; i++)
+	  B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
+        #pragma omp for
+        for (i = 1; i < _PB_N - 1; i++)
+	  A[i] = 0.33333 * (B[i-1] + B[i] + B[i + 1]);
+      }
+  }
 #pragma endscop
 
 }

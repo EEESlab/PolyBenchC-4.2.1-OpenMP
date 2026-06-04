@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -67,10 +68,20 @@ void kernel_heat_3d(int tsteps,
 		      DATA_TYPE POLYBENCH_3D(B,N,N,N,n,n,n))
 {
   int t, i, j, k;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
+  /* One parallel region for the whole time loop: the team is created once
+     instead of being re-spawned twice per timestep. The implicit barrier at
+     the end of each `#pragma omp for` separates the two phases (B reads A,
+     then A reads B) and synchronises before the next timestep. */
+  #pragma omp parallel num_threads(nthr) private(t, i, j, k)
+  {
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
     for (t = 1; t <= TSTEPS; t++) {
-        #pragma omp parallel for private(j, k)
+        #pragma omp for
         for (i = 1; i < _PB_N-1; i++) {
             for (j = 1; j < _PB_N-1; j++) {
                 for (k = 1; k < _PB_N-1; k++) {
@@ -81,7 +92,7 @@ void kernel_heat_3d(int tsteps,
                 }
             }
         }
-        #pragma omp parallel for private(j, k)
+        #pragma omp for
         for (i = 1; i < _PB_N-1; i++) {
            for (j = 1; j < _PB_N-1; j++) {
                for (k = 1; k < _PB_N-1; k++) {
@@ -93,6 +104,7 @@ void kernel_heat_3d(int tsteps,
            }
        }
     }
+  }
 #pragma endscop
 
 }

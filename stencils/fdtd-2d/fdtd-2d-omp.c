@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -96,16 +97,28 @@ void kernel_fdtd_2d(int tmax,
 		    DATA_TYPE POLYBENCH_1D(_fict_,TMAX,tmax))
 {
   int t, i, j;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
 
-  for(t = 0; t < _PB_TMAX; t++)
-    {
-      for (j = 0; j < _PB_NY; j++)
-	ey[0][j] = _fict_[t];
+  /* One parallel region for the whole time loop: the team is created once
+     instead of being re-spawned every timestep. */
+  #pragma omp parallel num_threads(nthr) private(t, i, j)
+  {
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
 
-      #pragma omp parallel private(i, j)
+    for(t = 0; t < _PB_TMAX; t++)
       {
+        /* Boundary update: a single serial loop. Done by thread 0 (the
+           omp master/single workaround), then an explicit barrier makes the
+           result visible to the whole team before the worksharing loops. */
+        if (omp_get_thread_num() == 0)
+          for (j = 0; j < _PB_NY; j++)
+	    ey[0][j] = _fict_[t];
+
+        #pragma omp barrier
+
         #pragma omp for
         for (i = 1; i < _PB_NX; i++)
 	  for (j = 0; j < _PB_NY; j++)
@@ -122,7 +135,7 @@ void kernel_fdtd_2d(int tmax,
 	    hz[i][j] = hz[i][j] - SCALAR_VAL(0.7)*  (ex[i][j+1] - ex[i][j] +
 					 ey[i+1][j] - ey[i][j]);
       }
-    }
+  }
 
 #pragma endscop
 }

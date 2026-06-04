@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -83,12 +84,20 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 		DATA_TYPE POLYBENCH_2D(D,NI,NL,ni,nl))
 {
   int i, j, k;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
   /* D := alpha*A*B*C + beta*D */
-  #pragma omp parallel private (j, k)
+  #pragma omp parallel num_threads(nthr) private (j, k)
   {
-    #pragma omp for
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
+    /* Compute tmp = alpha*A*B (parallelize on i, no race).
+       nowait suppresses the implicit end-of-for barrier; the explicit
+       `#pragma omp barrier` below provides the necessary synchronisation
+       before the next loop reads tmp. */
+    #pragma omp for nowait
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -96,6 +105,10 @@ void kernel_2mm(int ni, int nj, int nk, int nl,
 	  for (k = 0; k < _PB_NK; ++k)
 	    tmp[i][j] += alpha * A[i][k] * B[k][j];
 	}
+
+    #pragma omp barrier
+
+    /* D := tmp*C + beta*D (reads tmp produced above) */
     #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)

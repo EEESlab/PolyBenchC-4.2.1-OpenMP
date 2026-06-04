@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /* Include polybench common header. */
 #include <polybench.h>
@@ -79,12 +80,18 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 		DATA_TYPE POLYBENCH_2D(G,NI,NL,ni,nl))
 {
   int i, j, k;
+  int nthr = 4;   /* explicit thread count — should be passed to __kmpc_push_num_threads */
 
 #pragma scop
-  #pragma omp parallel private (j, k)
+  #pragma omp parallel num_threads(nthr) private (j, k)
   {
-    /* E := A*B */
-    #pragma omp for
+    if (omp_get_thread_num() == 0)    // workaround to avoid using #pragma omp master since it is not managed by mlir-opt-omp
+        fprintf(stderr, "requested %d threads, got %d\n", nthr, omp_get_num_threads());
+
+    /* E := A*B  and  F := C*D are independent, so the first carries a
+       nowait: no need to synchronise between them. The single explicit
+       barrier below re-synchronises before G := E*F reads both. */
+    #pragma omp for nowait
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NJ; j++)
 	{
@@ -93,7 +100,7 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	    E[i][j] += A[i][k] * B[k][j];
 	}
     /* F := C*D */
-    #pragma omp for 
+    #pragma omp for nowait
     for (i = 0; i < _PB_NJ; i++)
       for (j = 0; j < _PB_NL; j++)
 	{
@@ -101,7 +108,10 @@ void kernel_3mm(int ni, int nj, int nk, int nl, int nm,
 	  for (k = 0; k < _PB_NM; ++k)
 	    F[i][j] += C[i][k] * D[k][j];
 	}
-    /* G := E*F */
+
+    #pragma omp barrier
+
+    /* G := E*F (reads both E and F produced above) */
     #pragma omp for
     for (i = 0; i < _PB_NI; i++)
       for (j = 0; j < _PB_NL; j++)
