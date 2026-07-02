@@ -14,7 +14,8 @@ KERNEL_DIR="${SRC%/*}"
 rm -f *.o  *.ll *.cir *.mlir
 
 clang -O0  $CLANG_FLAGS -Xclang -disable-llvm-optzns -S -Xclang -fclangir -Xclang -emit-cir -I/usr/lib/gcc/x86_64-linux-gnu/12/include -Iutilities -DPULP_TARGET -DMINI_DATASET -DPOLYBENCH_DUMP_ARRAYS -DPOLYBENCH_TIME $KERNEL_SRC -o test.cir
-cir-opt test.cir  -cir-unroll-by-two --cir-to-llvm --reconcile-unrealized-casts -o test-s1.mlir
+#cir-opt test.cir  --cir-unroll-by-two --cir-to-llvm --reconcile-unrealized-casts -o test-s1.mlir
+cir-opt test.cir  --cir-to-llvm --reconcile-unrealized-casts -o test-s1.mlir
 sed -i -E 's/cir\.[^,}]+,? ?//g' test-s1.mlir
 ../../grammar/mlir-transform/BUILD/mlir-opt-omp  --allow-unregistered-dialect   --omp-lower-dsl=../../grammar/mlir-transform/rules.dsl   --omp-lower-runtime=pmsis   --omp-to-omp-lower --omp-outline --omp-lower-plan  test-s1.mlir > test-s2.mlir
 mlir-opt test-s2.mlir --convert-arith-to-llvm --convert-func-to-llvm --reconcile-unrealized-casts -o test-s3.mlir
