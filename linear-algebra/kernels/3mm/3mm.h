@@ -22,7 +22,7 @@
 #   define NJ 32
 #   define NK 32
 #   define NL 32
-#   define NM 32
+#   define NM 16   // modified from 32 to 16 to avoid L1 overflow on the PULP platform
 #  endif
 
 #  ifdef SMALL_DATASET
