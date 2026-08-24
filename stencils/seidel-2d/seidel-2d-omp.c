@@ -57,26 +57,51 @@ void print_array(int n,
 
 /* Main computational kernel. The whole function will be timed,
    including the call and return. */
-/* NOTE: Gauss-Seidel is an in-place stencil where A[i][j] depends on
-   already-updated neighbors A[i-1][*] and A[i][j-1]. Both i and j carry
-   true data dependencies, making this kernel inherently sequential.
-   The ACC version incorrectly uses omp for collapse(2), which is a race
-   condition. No parallelization is applied here to preserve correctness. */
+/* NOTE: Gauss-Seidel is an in-place stencil: A[i][j] reads the neighbours
+   A[i-1][j-1..j+1] and A[i][j-1] that the same sweep has already updated.
+   Both i and j therefore carry a true dependence, and putting an `omp for`
+   on the i loop is a data race — the row above belongs to another thread, so
+   each thread reads a mix of updated and stale values and the answer depends
+   on where the block boundaries fall. It stays close enough to the right one
+   to look plausible on a small dataset and drifts in the last printed digit
+   on a large one, which is the worst way for a race to fail.
+
+   The loop nest is skewed instead. Every dependence vector (di,dj) of the
+   sweep — (1,1), (1,0), (1,-1) and (0,1) — is strictly positive along
+   w = 2*i + j, so no two points of one anti-diagonal w depend on each other
+   and the whole diagonal runs in parallel, while w itself stays sequential.
+   The implicit barrier that closes each `omp for` is what separates one
+   diagonal from the next, and it is load-bearing. The result is the
+   sequential one, bit for bit, for any team size. */
 static
 void kernel_seidel_2d(int tsteps,
 		      int n,
 		      DATA_TYPE POLYBENCH_2D(A,N,N,n,n))
 {
-  int t, i, j;
+  int t, w, i, j, ilo, ihi;
 
 #pragma scop
+  #pragma omp parallel private(t, w, i, j, ilo, ihi)
   for (t = 0; t <= _PB_TSTEPS - 1; t++)
-    #pragma omp parallel for private(j) 
-    for (i = 1; i<= _PB_N - 2; i++)
-      for (j = 1; j <= _PB_N - 2; j++)
-	A[i][j] = (A[i-1][j-1] + A[i-1][j] + A[i-1][j+1]
-		   + A[i][j-1] + A[i][j] + A[i][j+1]
-		   + A[i+1][j-1] + A[i+1][j] + A[i+1][j+1])/SCALAR_VAL(9.0);
+    for (w = 3; w <= 3 * (_PB_N - 2); w++)
+      {
+	/* The diagonal 2*i + j == w, restricted to j = w - 2*i in [1, n-2].
+	   Both bounds are the same on every thread, so every thread reaches
+	   the `omp for` below with the same trip count. */
+	ihi = (w - 1) / 2;
+	if (ihi > _PB_N - 2) ihi = _PB_N - 2;
+	ilo = (w - (_PB_N - 2) + 1) / 2;
+	if (ilo < 1) ilo = 1;
+
+	#pragma omp for
+	for (i = ilo; i <= ihi; i++)
+	  {
+	    j = w - 2 * i;
+	    A[i][j] = (A[i-1][j-1] + A[i-1][j] + A[i-1][j+1]
+		       + A[i][j-1] + A[i][j] + A[i][j+1]
+		       + A[i+1][j-1] + A[i+1][j] + A[i+1][j+1])/SCALAR_VAL(9.0);
+	  }
+      }
 #pragma endscop
 
 }

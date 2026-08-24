@@ -27,3 +27,6 @@ bin/
 *_gcc
 *_opt
 *_ref
+# Per-kernel output of a test driver run
+results_*/
+results_*.csv
