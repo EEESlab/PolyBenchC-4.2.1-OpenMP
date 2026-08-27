@@ -70,16 +70,9 @@ void print_array(int n,
    sweep — (1,1), (1,0), (1,-1) and (0,1) — is strictly positive along
    w = 2*i + j, so no two points of one anti-diagonal w depend on each other
    and the whole diagonal runs in parallel, while w itself stays sequential.
-   The join that closes each diagonal is what separates it from the next, and
-   it is load-bearing. The result is the sequential one, bit for bit, for any
-   team size.
-
-   The region is opened per diagonal rather than once around the t loop: the
-   diagonal bounds are then computed by one thread outside any region, and the
-   worksharing loop stays the immediate body of its `parallel`, which is the
-   shape every other kernel here uses and the only one the PULP lowering is
-   exercised on. Hoisting the region and nesting an `omp for` two sequential
-   loops deep inside it hangs the cluster. */
+   The implicit barrier that closes each `omp for` is what separates one
+   diagonal from the next, and it is load-bearing. The result is the
+   sequential one, bit for bit, for any team size. */
 static
 void kernel_seidel_2d(int tsteps,
 		      int n,
@@ -88,16 +81,19 @@ void kernel_seidel_2d(int tsteps,
   int t, w, i, j, ilo, ihi;
 
 #pragma scop
+  #pragma omp parallel private(t, w, i, j, ilo, ihi)
   for (t = 0; t <= _PB_TSTEPS - 1; t++)
     for (w = 3; w <= 3 * (_PB_N - 2); w++)
       {
-	/* The diagonal 2*i + j == w, restricted to j = w - 2*i in [1, n-2]. */
+	/* The diagonal 2*i + j == w, restricted to j = w - 2*i in [1, n-2].
+	   Both bounds are the same on every thread, so every thread reaches
+	   the `omp for` below with the same trip count. */
 	ihi = (w - 1) / 2;
 	if (ihi > _PB_N - 2) ihi = _PB_N - 2;
 	ilo = (w - (_PB_N - 2) + 1) / 2;
 	if (ilo < 1) ilo = 1;
 
-	#pragma omp parallel for private(j)
+	#pragma omp for
 	for (i = ilo; i <= ihi; i++)
 	  {
 	    j = w - 2 * i;
